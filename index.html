@@ -311,7 +311,7 @@ var plotVariable = function(variable, year, level) {
        .select('title')
        .text(function(d) { console.log(d[indicador]); return d[indicador] + '%'; });
 
-    d3.selectAll('#partidos .map path').style('fill', 'white');
+    d3.selectAll('#partidos .map path').transition().style('fill', 'white');
     for (i = 0; i < sorted.length / rowsPerGroup; i++) {
         var m = d3.selectAll('#partidos svg.map')
             .filter(function(d,k) {
@@ -321,6 +321,7 @@ var plotVariable = function(variable, year, level) {
             var d = sorted[i*rowsPerGroup + j];
             if (d === undefined) continue;
             m.selectAll('path#' + d.id)
+                .transition()
                 .style('fill', colors[j % rowsPerGroup]);
         }
     }
@@ -330,6 +331,7 @@ YEARS = d3.selectAll('#year option')[0].map(function(d) { return d.innerHTML; })
 var plotSparklines = function(data, variable, level) {
     d3.selectAll('svg#sparklines path')
         .data(data)
+        .transition()
         .attr('d', function(d) {
             d = YEARS.map(function(year) {
                 return parseFloat(d[variable + year + "_" + level]);
