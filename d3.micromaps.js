@@ -11,7 +11,7 @@ var mapProvinces;
 var tableInitialized = false;
 var selectedProvince, provinceData;
 var colors = d3.scale.category10().range();
-var transitionDuration = 500;
+var transitionDuration = 750;
 var YEARS = d3.range(+d3.select('input#year').node().min,
                        +d3.select('input#year').node().max + 1);
 var sparklineStep = 12;
