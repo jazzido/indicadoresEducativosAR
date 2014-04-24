@@ -36,6 +36,10 @@ label { font-weight: bold; }
   cursor: pointer;
 }
 
+#year-line {
+  pointer-events: none;
+}
+
 div.band { position: absolute; width: 100%; z-index: -1}
 div.band.even {
   background-color: #eee;
@@ -68,7 +72,7 @@ svg#sparklines {
   position: absolute;
   top: 0px;
   left: 200px;
-  pointer-events: none;
+  cursor: pointer;
 }
 svg#sparklines path{ fill: none; stroke-width: 1px; stroke: black;}
 

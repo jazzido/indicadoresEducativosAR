@@ -13,8 +13,9 @@ var selectedProvince, provinceData;
 var colors = d3.scale.category10().range();
 var transitionDuration = 500;
 var YEARS = d3.range(+d3.select('input#year').node().min,
-                     +d3.select('input#year').node().max + 1);
-              //.map(function(y) { return y.toString(); });
+                       +d3.select('input#year').node().max + 1);
+var sparklineStep = 12;
+var sparkline_scalex = function(d, i) { return i * sparklineStep; };
 
 
 // ES6 Array.prototype.findIndex polyfill
@@ -84,11 +85,11 @@ var buildDataTable = function(data) {
          });
 
   d3.range(0, data.length / 4)
-    .forEach(function(d,i) {
+  .forEach(function(d,i) {
     d3.select('#partidos')
-      .append('div')
-      .classed({band: true, even: i % 2 === 0, odd: i % 2 !== 0 })
-      .style({top: (rowHeight * 4 * i) + 'px', height: (rowHeight * 4) + 'px' });
+    .append('div')
+    .classed({band: true, even: i % 2 === 0, odd: i % 2 !== 0 })
+    .style({top: (rowHeight * 4 * i) + 'px', height: (rowHeight * 4) + 'px' });
   });
 
 
@@ -131,6 +132,16 @@ var buildDataTable = function(data) {
   .append('path')
   .attr('id', function(d) { return d.id; });
 
+  d3.select('svg#sparklines')
+  .on('click', function() {
+    var i = Math.round(d3.mouse(this)[0] / sparklineStep);
+    d3.select('input#year').node().value = i + YEARS[0];
+    d3.select('input#year').on('change')();
+
+  });
+
+
+
   sparklines_svg.select('#year-line').remove();
   sparklines_svg.append('line')
   .attr('x1', 0)
@@ -170,10 +181,10 @@ var plotVariable = function(variable, year, level) {
 
   // point scale is calculated across the entire time period (years)
   var red = censoData.reduce(function(memo, prov) {
-                          return memo.concat(YEARS.map(function(y) {
-                                               return parseFloat(prov[variable + y + '_' + level]);
-                                             }));
-                        }, []);
+              return memo.concat(YEARS.map(function(y) {
+                                   return parseFloat(prov[variable + y + '_' + level]);
+                                 }));
+            }, []);
 
   var ext = d3.extent(red);
   var scalex = d3.scale.linear()
@@ -205,9 +216,9 @@ var plotVariable = function(variable, year, level) {
 
 
   sparklines_svg.select('#year-line')
-    .transition()
-    .attr('x1', (year - d3.select('input#year').node().min) * 12 + 1)
-    .attr('x2', (year - d3.select('input#year').node().min) * 12 + 1);
+  .transition()
+  .attr('x1', (year - d3.select('input#year').node().min) * sparklineStep + 1)
+  .attr('x2', (year - d3.select('input#year').node().min) * sparklineStep + 1);
 
   if (!tableInitialized) {
     divs.html(function(d) { return d['name'] });
@@ -234,142 +245,138 @@ var plotVariable = function(variable, year, level) {
     });
   }
 
-    svg.selectAll('circle')
-    .data(sorted)
-    .transition()
-    .duration(transitionDuration)
-    .attr('cx', function(d) {
-      return scalex(d[indicador]);
-    })
-    .attr('r', 5)
-    .select('title')
-    .text(function(d) {
-      return d[indicador] + '%';
-    });
-
-    d3.selectAll('#partidos .map path').style('fill', 'white');
-    var _f = function(d,k) {
-                return k == i;
-              };
-    for (var i = 0; i < sorted.length / rowsPerGroup; i++) {
-      var m = d3.selectAll('#partidos svg.map')
-              .filter(_f);
-      for (var j = 0; j < rowsPerGroup; j++) {
-        var d = sorted[i*rowsPerGroup + j];
-        if (d === undefined) continue;
-        m.selectAll('path#' + d.id)
-        .style('fill', colors[j % rowsPerGroup]);
-      }
-    }
-  };
-
-
-  var plotSparklines = function(data, variable, level) {
-    // scale_y common to all sparklines
-    var red = data.reduce(function(memo, prov) {
-                          return memo.concat(YEARS.map(function(y) {
-                                               return parseFloat(prov[variable + y + '_' + level]);
-                                             }));
-                        }, []);
-
-    var ext = d3.extent(red);
-    var scale_y = d3.scale.linear()
-                  .domain(ext)
-                  .range([rowHeight - 5, 5]);
-
-    console.log('ext spark', ext);
-
-
-    d3.selectAll('svg#sparklines path')
-    .data(data)
-    .attr('d', function(d) {
-      console.log(d.name);
-      var d = YEARS.map(function(year) {
-            return parseFloat(d[variable + year + "_" + level]);
-          });
-      console.log(d);
-
-      var sparkline_gen = d3.svg.line()
-                          .x(function(d, i) { return i * 12; })
-                          .y(scale_y);
-      return sparkline_gen(d);
-    })
-    .attr('transform', function(d, i) {
-      return 'translate(0,' + (i * rowHeight) + ')';
-    });
-  };
-
-
-
-  var setScale = function(map) {
-    var k = 1.2;
-
-    map.attr('transform',
-             'translate(' + mapProjection.translate()[0] + ',' + mapProjection.translate()[1] + ')'
-                         + 'scale(' + k + ')'
-                         + "translate(-104.07198674046933,-160.25584492248782)");
-
-    map.selectAll('path').style('stroke-width', 1/(k*2) + 'px');;
-  };
-
-  var buildMap = function(topology) {
-    sourceMap = d3.select('body')
-                .append('svg')
-                .attr('height', mapHeight)
-                .attr('width', mapWidth)
-                .attr('id', 'clonethis')
-                .attr('class', 'map')
-                .append('g');
-
-    mapProvinces = topojson.feature(topology, topology.objects.provincias);
-    sourceMap.selectAll('path')
-    .data(mapProvinces.features)
-    .enter()
-    .append('path')
-    .attr('id', function(d) { return to_id(d.id); })
-    .attr('provincia', function(d) { return to_id(d.id) })
-    .attr('d', mapPath);
-  };
-
-  d3.selectAll('select, input#year')
-  .on('change', function() {
-    if (this.tagName == 'SELECT') {
-      tableInitialized = false;
-    };
-    var sV = d3.select('select#variable').node();
-    var sY = d3.select('input#year').node();
-    var sL = d3.select('select#level').node();
-    var selectedVariable = sV.options[sV.selectedIndex].value;
-    var selectedYear = sY.value;
-    var selectedLevel = sL.options[sL.selectedIndex].value;
-    plotVariable(selectedVariable, selectedYear, selectedLevel);
-    d3.select('span#current-year').text(sY.value);
+  svg.selectAll('circle')
+  .data(sorted)
+  .transition()
+  .duration(transitionDuration)
+  .attr('cx', function(d) {
+    return scalex(d[indicador]);
+  })
+  .attr('r', 5)
+  .select('title')
+  .text(function(d) {
+    return d[indicador] + '%';
   });
 
-  var ready = function(error, data, argentina) {
-    censoData = data;
-    buildMap(argentina);
-
-    svg = d3.select('#container')
-          .append('svg')
-          .attr('width', pointsWidth)
-          .attr('id', 'points');
-
-    sparklines_svg = d3.select('#container')
-                     .append('svg')
-                     .attr('width', 100)
-                     .attr('id', 'sparklines');
-
-    buildDataTable(censoData, 2003, "egb_1");
-    d3.select('select#variable').on('change')();
+  d3.selectAll('#partidos .map path').style('fill', 'white');
+  var _f = function(d,k) {
+    return k == i;
   };
-
-  if (window.frameElement) { // for bl.ocks.org
-    window.frameElement.contentWindow.document.body.scroll = 'yes';
-    window.frameElement.scrolling = 'yes';
+  for (var i = 0; i < sorted.length / rowsPerGroup; i++) {
+    var m = d3.selectAll('#partidos svg.map')
+            .filter(_f);
+    for (var j = 0; j < rowsPerGroup; j++) {
+      var d = sorted[i*rowsPerGroup + j];
+      if (d === undefined) continue;
+      m.selectAll('path#' + d.id)
+      .style('fill', colors[j % rowsPerGroup]);
+    }
   }
+};
 
-  queue()
-  .defer(d3.csv, 'indicadores.csv')
-  .defer(d3.json, 'argentina-provincias.topojson')
-  .await(ready);
+
+var plotSparklines = function(data, variable, level) {
+  // scale_y common to all sparklines
+  var red = data.reduce(function(memo, prov) {
+              return memo.concat(YEARS.map(function(y) {
+                                   return parseFloat(prov[variable + y + '_' + level]);
+                                 }));
+            }, []);
+
+  var ext = d3.extent(red);
+  var scale_y = d3.scale.linear()
+                .domain(ext)
+                .range([rowHeight - 5, 5]);
+
+  d3.selectAll('svg#sparklines path')
+  .data(data)
+  .attr('d', function(d) {
+
+    var d = YEARS.map(function(year) {
+              return parseFloat(d[variable + year + "_" + level]);
+            });
+
+    var sparkline_gen = d3.svg.line()
+                        .x(sparkline_scalex)
+                        .y(scale_y);
+    return sparkline_gen(d);
+  })
+  .attr('transform', function(d, i) {
+    return 'translate(0,' + (i * rowHeight) + ')';
+  });
+};
+
+
+
+var setScale = function(map) {
+  var k = 1.2;
+
+  map.attr('transform',
+           'translate(' + mapProjection.translate()[0] + ',' + mapProjection.translate()[1] + ')'
+                       + 'scale(' + k + ')'
+                       + "translate(-104.07198674046933,-160.25584492248782)");
+
+  map.selectAll('path').style('stroke-width', 1/(k*2) + 'px');;
+};
+
+var buildMap = function(topology) {
+  sourceMap = d3.select('body')
+              .append('svg')
+              .attr('height', mapHeight)
+              .attr('width', mapWidth)
+              .attr('id', 'clonethis')
+              .attr('class', 'map')
+              .append('g');
+
+  mapProvinces = topojson.feature(topology, topology.objects.provincias);
+  sourceMap.selectAll('path')
+  .data(mapProvinces.features)
+  .enter()
+  .append('path')
+  .attr('id', function(d) { return to_id(d.id); })
+  .attr('provincia', function(d) { return to_id(d.id) })
+  .attr('d', mapPath);
+};
+
+d3.selectAll('select, input#year')
+.on('change', function() {
+  if (this.tagName == 'SELECT') {
+    tableInitialized = false;
+  };
+  var sV = d3.select('select#variable').node();
+  var sY = d3.select('input#year').node();
+  var sL = d3.select('select#level').node();
+  var selectedVariable = sV.options[sV.selectedIndex].value;
+  var selectedYear = sY.value;
+  var selectedLevel = sL.options[sL.selectedIndex].value;
+  plotVariable(selectedVariable, selectedYear, selectedLevel);
+  d3.select('span#current-year').text(sY.value);
+});
+
+var ready = function(error, data, argentina) {
+  censoData = data;
+  buildMap(argentina);
+
+  svg = d3.select('#container')
+        .append('svg')
+        .attr('width', pointsWidth)
+        .attr('id', 'points');
+
+  sparklines_svg = d3.select('#container')
+                   .append('svg')
+                   .attr('width', 100)
+                   .attr('id', 'sparklines');
+
+  buildDataTable(censoData, 2003, "egb_1");
+  d3.select('select#variable').on('change')();
+};
+
+if (window.frameElement) { // for bl.ocks.org
+  window.frameElement.contentWindow.document.body.scroll = 'yes';
+  window.frameElement.scrolling = 'yes';
+}
+
+queue()
+.defer(d3.csv, 'indicadores.csv')
+.defer(d3.json, 'argentina-provincias.topojson')
+.await(ready);
