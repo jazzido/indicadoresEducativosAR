@@ -292,7 +292,6 @@ var plotSparklines = function(data, variable, level) {
   d3.selectAll('svg#sparklines path')
   .data(data)
   .attr('d', function(d) {
-
     var d = YEARS.map(function(year) {
               return parseFloat(d[variable + year + "_" + level]);
             });
@@ -339,19 +338,70 @@ var buildMap = function(topology) {
   .attr('d', mapPath);
 };
 
-d3.selectAll('select, input#year')
-.on('change', function() {
-  if (this.tagName == 'SELECT') {
-    tableInitialized = false;
-  };
+
+// code for handling hashchange and control events sucks big time
+// sorry a/b that.
+d3.selectAll('select, input#year').on('change', function() {
+
   var sV = d3.select('select#variable').node();
   var sY = d3.select('input#year').node();
   var sL = d3.select('select#level').node();
   var selectedVariable = sV.options[sV.selectedIndex].value;
   var selectedYear = sY.value;
   var selectedLevel = sL.options[sL.selectedIndex].value;
+
+  if (this !== window) {
+    if (this.tagName === 'SELECT') { tableInitialized = false; }
+    window.location.hash = '#' + [selectedVariable, selectedLevel, selectedYear].join('/');
+  }
   plotVariable(selectedVariable, selectedYear, selectedLevel);
   d3.select('span#current-year').text(sY.value);
+});
+
+
+var parseHash = function(hash) {
+  var selection = window.location.hash.substr(1).split('/');
+  if (selection.length !== 3) { return };
+
+  var sV = d3.select('select#variable');
+  var sY = d3.select('input#year');
+  var sL = d3.select('select#level');
+  var selectedVariable = sV.node().options[sV.node().selectedIndex].value;
+  var selectedYear = sY.node().value;
+  var selectedLevel = sL.node().options[sL.node().selectedIndex].value;
+
+  // validate hash pieces
+  if (d3.selectAll('select#variable option')[0].findIndex(function(o) { return o.value === selection[0] }) === -1 ||
+      d3.selectAll('select#level option')[0].findIndex(function(o) { return o.value === selection[1] }) === -1 ||
+      (parseInt(selectedYear) < parseInt(sY.node().getAttribute('min')) &&
+       parseInt(selectedYear) > parseInt(sY.node().getAttribute('max')))) {
+    return;
+  }
+
+  // check for changes
+  if (selectedVariable !== selection[0]) {
+    sV.node().selectedIndex = d3.selectAll('select#variable option')[0].findIndex(function(o) { return o.value === selection[0]; });
+    tableInitialized = false;
+
+    sV.on('change')(sV.node());
+  }
+
+  if (selectedLevel !== selection[1]) {
+    sL.node().selectedIndex = d3.selectAll('select#level option')[0].findIndex(function(o) { return o.value === selection[1]; });
+    tableInitialized = false;
+    sL.on('change')(sL.node());
+  }
+
+  if (selectedYear !== selection[2]) {
+    sY.node().value = selection[2];
+    sY.on('change')(sY.node());
+  }
+
+};
+
+
+d3.select(window).on('hashchange', function() {
+  parseHash(this.location.hash);
 });
 
 var ready = function(error, data, argentina) {
@@ -368,8 +418,15 @@ var ready = function(error, data, argentina) {
                    .attr('width', 100)
                    .attr('id', 'sparklines');
 
+
   buildDataTable(censoData, 2003, "egb_1");
-  d3.select('select#variable').on('change')();
+  if (window.location.hash === '') {
+    window.location.hash = '#abandono/egb_1/2003';
+  }
+  else {
+    d3.select(window).on('hashchange')();
+  }
+
 };
 
 if (window.frameElement) { // for bl.ocks.org
