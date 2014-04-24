@@ -192,7 +192,7 @@ var plotVariable = function(variable, year, level) {
                .range([pointsMargin, pointsWidth - pointsMargin])
                .nice();
 
-  var mean = d3.mean(censoData, function(d) {
+  var median = d3.median(censoData, function(d) {
                return d[indicador];
              });
 
@@ -201,8 +201,8 @@ var plotVariable = function(variable, year, level) {
   svg.select('#average-line')
   .transition()
   .duration(transitionDuration)
-  .attr('x1', scalex(mean))
-  .attr('x2', scalex(mean));
+  .attr('x1', scalex(median))
+  .attr('x2', scalex(median));
 
   var sorted = censoData.sort(function(a,b) {
                  return +b[indicador] - +a[indicador];
@@ -212,7 +212,7 @@ var plotVariable = function(variable, year, level) {
   divs.data(sorted);
 
   var transition = d3.select('body').transition().duration(transitionDuration),
-      delay = function(d, i) { return i * 50 };
+      delay = function(d, i) { return i * 25 };
 
 
   sparklines_svg.select('#year-line')
@@ -230,9 +230,10 @@ var plotVariable = function(variable, year, level) {
     .delay(delay)
     .style('top', function(d, i) {
       var cur = this.innerHTML;
-      return (sorted.findIndex(function(e) {
+      var idx  = sorted.findIndex(function(e) {
                 return cur === e['name'];
-              }) * rowHeight) + 'px';
+              });
+      return (idx * rowHeight) + 'px';
     });
 
     transition.selectAll('svg#sparklines path')
