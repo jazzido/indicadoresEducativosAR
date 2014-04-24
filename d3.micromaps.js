@@ -1,5 +1,5 @@
 var svg, censoData;
-var pointsMargin = 10, pointsWidth = 300;
+var pointsMargin = 10, pointsWidth = 350;
 var rowHeight = 30, rowsPerGroup = 4;
 var sourceMap;
 var mapHeight = rowHeight * 4, mapWidth = 200;
@@ -13,8 +13,8 @@ var selectedProvince, provinceData;
 var colors = d3.scale.category10().range();
 var transitionDuration = 500;
 var YEARS = d3.range(+d3.select('input#year').node().min,
-                     +d3.select('input#year').node().max + 1)
-              .map(function(y) { return y.toString(); });
+                     +d3.select('input#year').node().max + 1);
+              //.map(function(y) { return y.toString(); });
 
 
 // ES6 Array.prototype.findIndex polyfill
@@ -68,8 +68,8 @@ var toFixed = function(value, precision) {
 var buildDataTable = function(data) {
   data.map(function(province) {
     province.name = province.id;
-    province.id = to_id(province.id)
-  })
+    province.id = to_id(province.id);
+  });
 
   provinceData = data;
   d3.selectAll('#partidos div').remove();
@@ -82,6 +82,15 @@ var buildDataTable = function(data) {
          function(d, i) {
            return (i * rowHeight) + 'px';
          });
+
+  d3.range(0, data.length / 4)
+    .forEach(function(d,i) {
+    d3.select('#partidos')
+      .append('div')
+      .classed({band: true, even: i % 2 === 0, odd: i % 2 !== 0 })
+      .style({top: (rowHeight * 4 * i) + 'px', height: (rowHeight * 4) + 'px' });
+  });
+
 
   d3.selectAll('svg#points circle').remove();
   d3.select('svg#points')
@@ -97,6 +106,9 @@ var buildDataTable = function(data) {
   .attr('r', 5)
   .attr('fill', function(d, i) { return colors[i % rowsPerGroup]; })
   .append('title');
+
+  d3.select('#extent-min').style('left', '260px');
+  d3.select('#extent-max').style('left', pointsWidth + 260 + 'px');
 
   svg.select('#average-line').remove();
   svg.append('line')
@@ -138,7 +150,7 @@ var buildDataTable = function(data) {
   for (i = 0; i < data.length / rowsPerGroup; i++) {
     var c = d3.select('svg#clonethis').node().cloneNode(true);
     c.style.top = i * mapHeight + 'px';
-    c.style.left = '550px';
+    c.style.left = pointsWidth + 250 + 'px';
     c.style.visibility = 'visible';
     d3.select('#partidos').node().appendChild(c);
     d3.select(c)
@@ -157,12 +169,13 @@ var plotVariable = function(variable, year, level) {
   var indicador = variable + year + "_" + level;
 
   // point scale is calculated across the entire time period (years)
-  var ext = d3.extent(censoData.reduce(function(memo, prov) {
+  var red = censoData.reduce(function(memo, prov) {
                           return memo.concat(YEARS.map(function(y) {
-                                               return prov[variable + y + '_' + level];
+                                               return parseFloat(prov[variable + y + '_' + level]);
                                              }));
-                        }, []));
+                        }, []);
 
+  var ext = d3.extent(red);
   var scalex = d3.scale.linear()
                .domain(ext)
                .range([pointsMargin, pointsWidth - pointsMargin])
@@ -184,7 +197,7 @@ var plotVariable = function(variable, year, level) {
                  return +b[indicador] - +a[indicador];
                });
 
-  var divs = d3.selectAll('#partidos div');
+  var divs = d3.selectAll('#partidos div:not(.band)');
   divs.data(sorted);
 
   var transition = d3.select('body').transition().duration(transitionDuration),
@@ -202,7 +215,7 @@ var plotVariable = function(variable, year, level) {
     tableInitialized = true;
   }
   else {
-    transition.selectAll('#partidos div')
+    transition.selectAll('#partidos div:not(.band)')
     .delay(delay)
     .style('top', function(d, i) {
       var cur = this.innerHTML;
@@ -253,13 +266,18 @@ var plotVariable = function(variable, year, level) {
 
   var plotSparklines = function(data, variable, level) {
     // scale_y common to all sparklines
-    var scale_y = d3.scale.linear()
-                  .domain(d3.extent(data.reduce(function(memo, prov) {
+    var red = data.reduce(function(memo, prov) {
                           return memo.concat(YEARS.map(function(y) {
-                                               return prov[variable + y + '_' + level];
+                                               return parseFloat(prov[variable + y + '_' + level]);
                                              }));
-                        }, [])))
+                        }, []);
+
+    var ext = d3.extent(red);
+    var scale_y = d3.scale.linear()
+                  .domain(ext)
                   .range([rowHeight - 5, 5]);
+
+    console.log('ext spark', ext);
 
 
     d3.selectAll('svg#sparklines path')
@@ -315,6 +333,9 @@ var plotVariable = function(variable, year, level) {
 
   d3.selectAll('select, input#year')
   .on('change', function() {
+    if (this.tagName == 'SELECT') {
+      tableInitialized = false;
+    };
     var sV = d3.select('select#variable').node();
     var sY = d3.select('input#year').node();
     var sL = d3.select('select#level').node();
@@ -322,6 +343,7 @@ var plotVariable = function(variable, year, level) {
     var selectedYear = sY.value;
     var selectedLevel = sL.options[sL.selectedIndex].value;
     plotVariable(selectedVariable, selectedYear, selectedLevel);
+    d3.select('span#current-year').text(sY.value);
   });
 
   var ready = function(error, data, argentina) {
