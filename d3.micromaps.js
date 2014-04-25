@@ -135,11 +135,9 @@ var buildDataTable = function(data) {
   d3.select('svg#sparklines')
   .on('click', function() {
     var i = Math.round(d3.mouse(this)[0] / sparklineStep);
-    d3.select('input#year').node().value = i + YEARS[0];
-    d3.select('input#year').on('change')();
-
+    var s = window.location.hash.substr(1).split('/');
+    window.location.hash = '#' + s.slice(0,2).join('/') + '/' + (i + YEARS[0]);
   });
-
 
 
   sparklines_svg.select('#year-line').remove();
@@ -339,7 +337,7 @@ var buildMap = function(topology) {
 };
 
 
-// code for handling hashchange and control events sucks big time
+// code for handling hashchange and controls events sucks big time
 // sorry a/b that.
 d3.selectAll('select, input#year').on('change', function() {
 
