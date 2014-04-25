@@ -70,6 +70,16 @@ svg#points {
   border-left: 1px solid #444;
   border-right: 1px solid #444;
 }
+
+svg#points g.circle text {
+  font-size: 8px;
+  fill: #9D9D9F;
+  -moz-transform: translate(7px,3px);
+  -webkit-transform: translate(7px,3px);
+  -ms-transform: translate(7px,3px);
+  -o-transform: translate(7px,3px);
+}
+
 svg#sparklines {
   position: absolute;
   top: 0px;
@@ -77,6 +87,8 @@ svg#sparklines {
   cursor: pointer;
 }
 svg#sparklines path{ fill: none; stroke-width: 1px; stroke: black;}
+svg#sparklines circle.min { fill: blue; }
+svg#sparklines circle.max { fill: #f00; }
 
 svg.map { position: absolute; }
 svg.map#clonethis { visibility: hidden; }
