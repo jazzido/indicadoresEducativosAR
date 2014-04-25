@@ -357,7 +357,7 @@ d3.selectAll('select, input#year').on('change', function() {
 });
 
 
-var parseHash = function(hash) {
+var parseHash = function(hash, force) {
   var selection = window.location.hash.substr(1).split('/');
   if (selection.length !== 3) { return };
 
@@ -377,10 +377,9 @@ var parseHash = function(hash) {
   }
 
   // check for changes
-  if (selectedVariable !== selection[0]) {
+  if (selectedVariable !== selection[0] || force) {
     sV.node().selectedIndex = d3.selectAll('select#variable option')[0].findIndex(function(o) { return o.value === selection[0]; });
     tableInitialized = false;
-
     sV.on('change')(sV.node());
   }
 
@@ -422,7 +421,7 @@ var ready = function(error, data, argentina) {
     window.location.hash = '#abandono/egb_1/2003';
   }
   else {
-    d3.select(window).on('hashchange')();
+    parseHash(window.location.hash, true);
   }
 
 };
