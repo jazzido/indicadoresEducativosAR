@@ -14,7 +14,7 @@ var colors = d3.scale.category10().range();
 var transitionDuration = 750;
 var YEARS = d3.range(+d3.select('input#year').node().min,
                        +d3.select('input#year').node().max + 1);
-var sparklineStep = 12;
+var sparklineStep = 10;
 var sparkline_scalex = function(d, i) { return i * sparklineStep; };
 
 
@@ -232,7 +232,7 @@ var plotVariable = function(variable, year, level) {
       var v = sorted.findIndex(function(e) {
                 return d['name'] === e['name'];
               }) * rowHeight;
-      return 'translate(0,' + v + ')';
+      return 'translate(2,' + v + ')';
     });
   }
 
@@ -284,9 +284,9 @@ var plotSparklines = function(data, variable, level) {
 
   var sparkline_groups = d3.selectAll('svg#sparklines g.sparkline')
   .data(data)
-  .attr('transform', function(d, i) {
-    return 'translate(0,' + (i * rowHeight) + ')';
-  });
+   .attr('transform', function(d, i) {
+      return 'translate(2,' + (i * rowHeight) + ')';
+   });
 
   sparkline_groups.select('path')
   .attr('d', function(d) {
