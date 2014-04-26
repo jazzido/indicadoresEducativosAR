@@ -13,7 +13,7 @@ var selectedProvince, provinceData;
 var colors = d3.scale.category10().range();
 var transitionDuration = 750;
 var YEARS = d3.range(+d3.select('input#year').node().min,
-                       +d3.select('input#year').node().max + 1);
+                     +d3.select('input#year').node().max + 1);
 var sparklineStep = 10;
 var sparkline_scalex = function(d, i) { return i * sparklineStep; };
 
@@ -162,16 +162,7 @@ var buildDataTable = function(data) {
     c.style.left = pointsWidth + 250 + 'px';
     c.style.visibility = 'visible';
     d3.select('#partidos').node().appendChild(c);
-    d3.select(c)
-    .on('mouseover', function(e) {
-      d3.select(this).classed('scaled', true);
-    })
-    .on('mouseout', function(e) {
-      d3.select(this).classed('scaled', false);
-    });
-
   }
-
 };
 
 var plotVariable = function(variable, year, level) {

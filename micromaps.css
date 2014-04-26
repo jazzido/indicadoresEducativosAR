@@ -94,8 +94,8 @@ svg.map { position: absolute; }
 svg.map#clonethis { visibility: hidden; }
 svg.map path { stroke: #333; stroke-width: 0.05px;}
 svg.map path.invisible { opacity: 0; }
-svg.map.scaled {
-  -webkit-transform: scale(2.2) ;
+svg.map:hover {
+  -webkit-transform: scale(2.2);
   -moz-transform: scale(2.2);
   -webkit-transition: -webkit-transform 100ms;
   -moz-transition: -moz-transform 100ms;
