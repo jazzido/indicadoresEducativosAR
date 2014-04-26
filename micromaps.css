@@ -32,6 +32,23 @@ label { font-weight: bold; }
   width: 100%;
 }
 
+#partidos div span.change {
+  font-size: 8px;
+  position: absolute;
+  left: 190px;
+  opacity: 1;
+}
+#partidos div span.change.equal {
+  font-weight: bolder;
+  font-size: 12px;
+}
+#partidos div span.change.up {
+  color: green;
+}
+#partidos div span.change.down {
+  color: red;
+}
+
 #partidos div:hover {
   background-color: #f5f5f5 !important;
   cursor: pointer;
@@ -49,7 +66,7 @@ div.band.odd {
   background-color: white;
 }
 
-#container span {
+#container span#extent-min, #container span#extent-max {
   position: absolute;
   top: -20px;
   font-size: 12px;
@@ -83,7 +100,7 @@ svg#points g.circle text {
 svg#sparklines {
   position: absolute;
   top: 0px;
-  left: 200px;
+  left: 214px;
   cursor: pointer;
 }
 svg#sparklines path{ fill: none; stroke-width: 1px; stroke: black;}
